@@ -8,6 +8,7 @@ import datetime
 from sqlalchemy import create_engine
 
 
+
 localdb = 'mysql://root:@127.0.0.1:3306/stock?charset=utf8'
 serverdb = 'mysql://stock:bfstock330@rm-bp1l731gac61ue24q.mysql.rds.aliyuncs.com:3306/stock?charset=utf8'
 
@@ -77,15 +78,4 @@ def getYesterday(today):
     yesterday = (today-oneday).strftime('%Y-%m-%d')  
     return yesterday
 
-def checkData(timespan,time,connect,tab):
-    # 1.获取窗口大小为timespan的数据库数据
-    if timespan == 'day':
-        today = datetime.date.today()
-        yesterday = getYesterday(today)
-        sql = 'SELECT * FROM %s WHERE date="%s"'%(tab,yesterday)      
-        db_hist_date = pd.read_sql(sql,connect)
-        
-    # 2.获取tushare历史数据
-    # 根据stockId分别获取指数和股票数据    
-    # 3.比较
 

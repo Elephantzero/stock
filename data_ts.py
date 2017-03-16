@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+'''
+主要调用接口说明：
+get_hist_data:能获取各种ktype数据，未复权，区分指数和个股的方法是：000001为个股，sh为指数。只提供了6个指数
+get_h_data:只有日K数据，提供各种复权数据，区分指数和个股的方法是：根据index字段
+'''
 import tushare as ts
 import pandas as pd
 from sqlalchemy import create_engine
@@ -6,8 +11,10 @@ import datetime
 import time
 import threading
 import urllib,urllib2,httplib
+import calendar
 
 from mytool import *
+from factor import *
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -58,8 +65,8 @@ tushare获取5min数据时，如果按照  start='2017-03-09 16:30' 可以获取
 校验方法：和日K一起校验昨日的5min是否正确，不正确则补充并校验前天数据
 '''    
     
-data_recent = {} #dict   i:第i个指数上次获取的df
-last_time = '' #存储上次获取具体5min数据的时间点
+data_recent_5min = {} #dict   i:第i个指数上次获取的df
+last_time_5min = '' #存储上次获取具体5min数据的时间点
 #tushare获取6个指数的5min数据    
 def ts_save_index_5min(i):
     connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
@@ -70,7 +77,7 @@ def ts_save_index_5min(i):
     
     print 'start save_index_5min  in     '+start_day+'...........................'
     
-    global data_recent
+    global data_recent_5min
     while i<= len(tab_stock):               
         if tab_stock.type[i-1] == True:#指数
             if (tab_stock.code[i-1] in ts_const.code2ts.keys()):
@@ -83,22 +90,22 @@ def ts_save_index_5min(i):
                 #取最近的5分钟线
                 #将此数据与上次的数据进行比较，以此判断是否为开盘实时数据
                 data_5min = data_5min.iloc[[0]]
-                if i not in data_recent or data_5min.index[0] != data_recent[i].index[0]:
-                    data_recent[i] = data_5min
+                if i not in data_recent_5min or data_5min.index[0] != data_recent_5min[i].index[0]:
+                    data_recent_5min[i] = data_5min
                     #处理数据
                     data_5min['name'] = tab_stock.name[i-1]
                     data_5min['stockId']=i
                     data = data_5min.reset_index()
-                    time = data.date[0]
-                    global last_time
-                    last_time = time
+                    this_time = data.date[0]
+                    global last_time_5min
+                    last_time_5min = this_time
                     tab = data[['stockId','date','open','close','high','low','volume','name']]
                     tab.to_sql('hist_5min',connect,if_exists='append',index=False)
-                    print 'get index_5min -->',i,'-->at',time
+                    print 'get index_5min -->',i,'-->at',this_time
         i = i+1
         
             
-    print 'succ save index_5min....................'+last_time
+    print 'succ save index_5min....................'+last_time_5min
 
                     
                     
@@ -124,7 +131,7 @@ def ts_save_hist_day(i):
     
     check_whenopen(start_day)
     
-    print 'start working in     '+start_day+'...........................'
+    print 'start ts_save_hist_day  in     '+start_day+'...........................'
         
     otherdata_day = ts.get_today_all()
     while i<= len(tab_stock):
@@ -171,60 +178,236 @@ def ts_save_hist_day(i):
         i = i+1
         print 'get data_day -->',i
     print 'succ save data_day....................'+start_day
+    #开始计算指标
+    print 'start calculate factor................'+start_day
+    start_factor()
+    print 'succ calculate factor................'+start_day
+    
+
+data_recent_15min = {} #dict   i:第i个指数上次获取的df
+last_time_15min = '' #存储上次获取具体15min数据的时间点
+#tushare获取6个指数的15min数据    
+def ts_save_index_15min(i):
+    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    tab_stock = pd.read_sql('stock',connect)
+    
+    start_day = datetime.date.today().strftime('%Y-%m-%d')
+    
+    
+    print 'start save_index_15min  in     '+start_day+'...........................'
+    
+    global data_recent_15min
+    while i<= len(tab_stock):               
+        if tab_stock.type[i-1] == True:#指数
+            if (tab_stock.code[i-1] in ts_const.code2ts.keys()):
+                data_15min = ts.get_hist_data(ts_const.code2ts[tab_stock.code[i-1]],ktype='15',start=start_day)
+            else:
+                data_15min = pd.DataFrame()
+
+            #data_15min类型判断是否有数据
+            if type(data_15min) == pd.core.frame.DataFrame and len(data_15min)>0:
+                #取最近的15分钟线
+                #将此数据与上次的数据进行比较，以此判断是否为开盘实时数据
+                data_15min = data_15min.iloc[[0]]
+                if i not in data_recent_15min or data_15min.index[0] != data_recent_15min[i].index[0]:
+                    data_recent_15min[i] = data_15min
+                    #处理数据
+                    data_15min['name'] = tab_stock.name[i-1]
+                    data_15min['stockId']=i
+                    data = data_15min.reset_index()
+                    this_time = data.date[0]
+                    global last_time_15min
+                    last_time_15min = this_time
+                    tab = data[['stockId','date','open','close','high','low','volume','name']]
+                    tab.to_sql('hist_15min',connect,if_exists='append',index=False)
+                    print 'get index_15min -->',i,'-->at',this_time
+        i = i+1
+        
+            
+    print 'succ save index_15min....................'+last_time_15min
+
+
+
+data_recent_30min = {} #dict   i:第i个指数上次获取的df
+last_time_30min = '' #存储上次获取具体5min数据的时间点
+def ts_save_index_30min(i):
+    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    tab_stock = pd.read_sql('stock',connect)
+    
+    start_day = datetime.date.today().strftime('%Y-%m-%d')
+    
+    
+    print 'start save_index_30min  in     '+start_day+'...........................'
+    
+    global data_recent_30min
+    while i<= len(tab_stock):               
+        if tab_stock.type[i-1] == True:#指数
+            if (tab_stock.code[i-1] in ts_const.code2ts.keys()):
+                data_30min = ts.get_hist_data(ts_const.code2ts[tab_stock.code[i-1]],ktype='30',start=start_day)
+            else:
+                data_30min = pd.DataFrame()
+
+            #data_30min类型判断是否有数据
+            if type(data_30min) == pd.core.frame.DataFrame and len(data_30min)>0:
+                #取最近的15分钟线
+                #将此数据与上次的数据进行比较，以此判断是否为开盘实时数据
+                data_30min = data_30min.iloc[[0]]
+                if i not in data_recent_30min or data_30min.index[0] != data_recent_15min[i].index[0]:
+                    data_recent_30min[i] = data_30min
+                    #处理数据
+                    data_30min['name'] = tab_stock.name[i-1]
+                    data_30min['stockId']=i
+                    data = data_30min.reset_index()
+                    this_time = data.date[0]
+                    global last_time_30min
+                    last_time_30min = this_time
+                    tab = data[['stockId','date','open','close','high','low','volume','name']]
+                    tab.to_sql('hist_30min',connect,if_exists='append',index=False)
+                    print 'get index_30min -->',i,'-->at',this_time
+        i = i+1
+        
+            
+    print 'succ save index_30min....................'+last_time_30min
+    
+    
+    
+data_recent_60min = {} #dict   i:第i个指数上次获取的df
+last_time_60min = '' #存储上次获取具体5min数据的时间点    
+def ts_save_index_60min(i):    
+    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    tab_stock = pd.read_sql('stock',connect)
+    
+    start_day = datetime.date.today().strftime('%Y-%m-%d')
+    
+    
+    print 'start save_index_60min  in     '+start_day+'...........................'
+    
+    global data_recent_60min
+    while i<= len(tab_stock):               
+        if tab_stock.type[i-1] == True:#指数
+            if (tab_stock.code[i-1] in ts_const.code2ts.keys()):
+                data_60min = ts.get_hist_data(ts_const.code2ts[tab_stock.code[i-1]],ktype='60',start=start_day)
+            else:
+                data_60min = pd.DataFrame()
+
+            #data_15min类型判断是否有数据
+            if type(data_60min) == pd.core.frame.DataFrame and len(data_60min)>0:
+                #取最近的15分钟线
+                #将此数据与上次的数据进行比较，以此判断是否为开盘实时数据
+                data_60min = data_60min.iloc[[0]]
+                if i not in data_recent_60min or data_60min.index[0] != data_recent_60min[i].index[0]:
+                    data_recent_60min[i] = data_60min
+                    #处理数据
+                    data_60min['name'] = tab_stock.name[i-1]
+                    data_60min['stockId']=i
+                    data = data_60min.reset_index()
+                    this_time = data.date[0]
+                    global last_time_60min
+                    last_time_60min = this_time
+                    tab = data[['stockId','date','open','close','high','low','volume','name']]
+                    tab.to_sql('hist_60min',connect,if_exists='append',index=False)
+                    print 'get index_60min -->',i,'-->at',this_time
+        i = i+1
+        
+            
+    print 'succ save index_15min....................'+last_time_60min
+    
+    
+    
+def ts_circle_save_15min():
+    timer = threading.Timer(900,ts_circle_save_15min)
+    timer.start()
+    ts_save_index_15min(1)
+    
+    
+def ts_circle_save_30min():
+    timer = threading.Timer(1800,ts_circle_save_5min)
+    timer.start()
+    ts_save_index_30min(1)
+    
+    
+def ts_circle_save_60min():
+    timer = threading.Timer(3600,ts_circle_save_60min)
+    timer.start()
+    ts_save_index_60min(1)
+
+    
+    
+#周五更新，只有6个指数和所有个股的未复权数据
+def ts_save_hist_week(i):
+    bStart = is_friday()
+    if bStart:
+        pass
+            
+
+
+#月底更新,只有6个指数和所有个股的未复权数据
+def ts_save_hist_month(i):
+    bStart = is_monthday()
+    if bStart:
+        pass
+
+
+
+
+def is_friday():
+    dayOfWeek = datetime.today().weekday()
+    if dayOfWeek == 4:
+        return True
+    else:
+        return False
+
+def is_monthday():
+    year = datetime.datetime.today().year
+    month = datetime.datetime.today().month
+    day = datetime.datetime.today().day
+    if day==calendar.monthrange(year,month)[1]:
+        return True
+    else:
+        return False
+
     
 def ts_circle_save_day():
     timer = threading.Timer(86400,ts_circle_save_day)
     timer.start()
-    ts_save_hist_day(1)      
+    ts_save_hist_day(1)
+
+def ts_circle_save_week():
+    timer = threading.Timer(86400,ts_circle_save_week)
+    timer.start()    
+    w_update = is_friday()
+    if w_update:
+        ts_save_hist_week(1)
+        
+        
+def ts_circle_save_month():
+    timer = threading.Timer(86400,ts_circle_save_month)
+    timer.start()    
+    w_update = is_monthday()
+    if w_update:
+        ts_save_hist_month(1)
+        
+      
 
 
 def startSave(t1):
     flag_day = 1
-    flag_5min = 1
-    while True:
-        if flag_5min:
-            ts_circle_save_5min()
-            flag_5min = 0
-            
-        now = datetime.datetime.now()
-        if now >= t1 and flag_day:
-           ts_circle_save_day()
-           flag_day = 0
-        
-    
-    
-    
-    
-    
-#心跳程序
-def workstate():
-    '''
-    url = "http://localhost:5000/stockweb/heartbeat?state=ImWorking"
-    req = urllib2.Request(url)
-#    print req
-#    res_data = urllib2.urlopen(req)
-#    res = res_data.read()
-#    print res
-    '''
-    while True:
-        url = "http://localhost:5000/stockweb/heartbeat?state=ImWorking"
-        conn = httplib.HTTPConnection("localhost:5000")
-        conn.request(method="GET",url=url)
-        time.sleep(300)
 
-        
-'''
-if __name__ == '__main__':
-    task_5min = threading.Thread(target=save_hist_5min,args=(1,))
-    task_day = threading.Thread(target=save_hist_day,args=(1,))
-   # work_state = threading.Thread(target=workstate)
-    task_5min.start()
-    task_day.start()
-   # work_state.start()
-    task_5min.join()
-    task_day.join()
-   # work_state.join()
-''' 
+    ts_circle_save_5min()
+    ts_circle_save_15min()
+    ts_circle_save_30min()
+    ts_circle_save_60min()
+            
+    while flag_day:        
+        now = datetime.datetime.now()
+        if now >= t1:
+           ts_circle_save_day()
+           ts_circle_save_week()
+           ts_circle_save_month()
+           flag_day = 0
+
+    
+    
 
 if __name__ == '__main__':
     year,month,today = datetime.datetime.now().year,datetime.datetime.now().month,datetime.datetime.now().day

@@ -109,14 +109,136 @@ def tl_get_hist_5min(client):
         
         
 def tl_get_hist_15min(client):
-    pass
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
+    start_time = str(now_hour)+':'+str( now_min/15*15)
+    try:
+        url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=15'%start_time
+        code, result = client.getData(url1)
+        if code==200:
+            print 'get data_hist_15min from tl'
+        else:
+            print code
+            print result
+    except Exception, e:
+        #traceback.print_exc()
+        raise e
+    r = json.loads(result)
+    if r['retCode'] == 1:    
+        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        db_session=sessionmaker(bind=connect)
+        session=db_session()
+        i = 1
+        for data in r['data']:
+            sql_stockid = 'select * from stock where code="%s" and exchangeCd=%d'%(data['ticker'],bool_exchangeCd(data['exchangeCD']))
+            sql_stockid_result = session.execute(sql_stockid).fetchall()
+            if len(sql_stockid_result)>0:
+                stockid = sql_stockid_result[0][0]
+                date = today+' '+data['barTime']
+                op = data['openPrice']
+                clo = data['closePrice']
+                high = data['highPrice']
+                low = data['lowPrice']
+                name = data['shortNM']
+                volume = data['totalVolume']
+                print 'start save ...............'
+                sql = 'insert into hist_15min(stockid,date,open,close,high,low,name,volume) values(%d,"%s",%f,%f,%f,%f,"%s",%f)'%(stockid,date,op,clo,high,low,name,volume)
+                print sql
+                session.execute(sql)
+                session.commit()
+            
+            print i 
+            i = i+1
+    elif r['retCode'] == -1:
+        print "on the exchange,can't get get_hist_15min................... "
 
 def tl_get_hist_30min(client):
-    pass
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
+    start_time = str(now_hour)+':'+str( now_min/30*30)
+    try:
+        url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=30'%start_time
+        code, result = client.getData(url1)
+        if code==200:
+            print 'get data_hist_30min from tl'
+        else:
+            print code
+            print result
+    except Exception, e:
+        #traceback.print_exc()
+        raise e
+    r = json.loads(result)
+    if r['retCode'] == 1:    
+        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        db_session=sessionmaker(bind=connect)
+        session=db_session()
+        i = 1
+        for data in r['data']:
+            sql_stockid = 'select * from stock where code="%s" and exchangeCd=%d'%(data['ticker'],bool_exchangeCd(data['exchangeCD']))
+            sql_stockid_result = session.execute(sql_stockid).fetchall()
+            if len(sql_stockid_result)>0:
+                stockid = sql_stockid_result[0][0]
+                date = today+' '+data['barTime']
+                op = data['openPrice']
+                clo = data['closePrice']
+                high = data['highPrice']
+                low = data['lowPrice']
+                name = data['shortNM']
+                volume = data['totalVolume']
+                print 'start save ...............'
+                sql = 'insert into hist_30min(stockid,date,open,close,high,low,name,volume) values(%d,"%s",%f,%f,%f,%f,"%s",%f)'%(stockid,date,op,clo,high,low,name,volume)
+                print sql
+                session.execute(sql)
+                session.commit()
+            
+            print i 
+            i = i+1
+    elif r['retCode'] == -1:
+        print "on the exchange,can't get get_hist_30min................... "
 
 def tl_get_hist_60min(client):
-    pass
-
+    today = datetime.date.today().strftime('%Y-%m-%d')
+    now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
+    start_time = str(now_hour)+':'+str( now_min/60*60)
+    try:
+        url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=60'%start_time
+        code, result = client.getData(url1)
+        if code==200:
+            print 'get data_hist_60min from tl'
+        else:
+            print code
+            print result
+    except Exception, e:
+        #traceback.print_exc()
+        raise e
+    r = json.loads(result)
+    if r['retCode'] == 1:    
+        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        db_session=sessionmaker(bind=connect)
+        session=db_session()
+        i = 1
+        for data in r['data']:
+            sql_stockid = 'select * from stock where code="%s" and exchangeCd=%d'%(data['ticker'],bool_exchangeCd(data['exchangeCD']))
+            sql_stockid_result = session.execute(sql_stockid).fetchall()
+            if len(sql_stockid_result)>0:
+                stockid = sql_stockid_result[0][0]
+                date = today+' '+data['barTime']
+                op = data['openPrice']
+                clo = data['closePrice']
+                high = data['highPrice']
+                low = data['lowPrice']
+                name = data['shortNM']
+                volume = data['totalVolume']
+                print 'start save ...............'
+                sql = 'insert into hist_60min(stockid,date,open,close,high,low,name,volume) values(%d,"%s",%f,%f,%f,%f,"%s",%f)'%(stockid,date,op,clo,high,low,name,volume)
+                print sql
+                session.execute(sql)
+                session.commit()
+            
+            print i 
+            i = i+1
+    elif r['retCode'] == -1:
+        print "on the exchange,can't get get_hist_60min................... "
 
         
         
@@ -142,11 +264,28 @@ def tl_circle_save_5min(client):
     timer = threading.Timer(300,tl_circle_save_5min,[client])
     timer.start()
     tl_get_hist_5min(client)       
-        
+
+def tl_circle_save_15min(client):
+    timer = threading.Timer(900,tl_circle_save_15min,[client])
+    timer.start()
+    tl_get_hist_15min(client)
+
+def tl_circle_save_30min(client):
+    timer = threading.Timer(1800,tl_circle_save_30min,[client])
+    timer.start()
+    tl_get_hist_30min(client) 
+
+def tl_circle_save_60min(client):
+    timer = threading.Timer(3600,tl_circle_save_60min,[client])
+    timer.start()
+    tl_get_hist_60min(client)         
         
 def start_work(client):
-    tl_circle_save_1min(client)
+    #tl_circle_save_1min(client)
     tl_circle_save_5min(client)
+    tl_circle_save_15min(client)
+    tl_circle_save_30min(client)
+    tl_circle_save_60min(client)
 
     
 

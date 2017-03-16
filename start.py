@@ -5,6 +5,16 @@
 
 from data_ts import *
 from data_tl import *
+from data_reduction import *
+import logging
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('stock')  
+logger.info('app start first')  
+
+
+
 
 if __name__ == '__main__':
     client = Client()
@@ -17,3 +27,5 @@ if __name__ == '__main__':
     startSave(sched_Timer)
     #通联获取数据入口
     start_work(client)
+    #每周的数据处理
+    start_data_reduction()
