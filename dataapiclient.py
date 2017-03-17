@@ -2,6 +2,10 @@
 import httplib
 import traceback
 import urllib
+import ssl
+import urllib2
+ 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 import StringIO, gzip
 HTTP_OK = 200

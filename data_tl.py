@@ -5,6 +5,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import datetime
 import threading
+import logging
+
+logger = logging.getLogger('stock.tl')  
+
 '''
 通联数据的分钟线校验需要历史数据接口才能完善
 '''
@@ -65,9 +69,17 @@ def tl_get_hist_1min(client):
 def tl_get_hist_5min(client): 
     today = datetime.date.today().strftime('%Y-%m-%d')
     now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
-    start_time = str(now_hour)+':'+str( now_min/5*5)
+    str_min = str(now_min/5*5)
+    if str_min == '0':
+        str_min = '00'
+    elif str_min == '5':
+        str_min = '05'
+    
+    start_time = str(now_hour)+':'+str_min
+    
     try:
         url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=5'%start_time
+        #url1='/api/market/getBarRTIntraDayOneMinute.json?time=10:05&exchangeCD=&unit=5'
         code, result = client.getData(url1)
         if code==200:
             print 'get data_hist_5min from tl'
@@ -111,7 +123,12 @@ def tl_get_hist_5min(client):
 def tl_get_hist_15min(client):
     today = datetime.date.today().strftime('%Y-%m-%d')
     now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
-    start_time = str(now_hour)+':'+str( now_min/15*15)
+    str_min = str(now_min/15*15)
+    if str_min == '0':
+        str_min = '00'
+
+    start_time = str(now_hour)+':'+str_min
+    
     try:
         url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=15'%start_time
         code, result = client.getData(url1)
@@ -155,7 +172,10 @@ def tl_get_hist_15min(client):
 def tl_get_hist_30min(client):
     today = datetime.date.today().strftime('%Y-%m-%d')
     now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
-    start_time = str(now_hour)+':'+str( now_min/30*30)
+    str_min = str(now_min/30*30)
+    if str_min == '0':
+        str_min = '00'
+    start_time = str(now_hour)+':'+str_min
     try:
         url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=30'%start_time
         code, result = client.getData(url1)
@@ -199,7 +219,10 @@ def tl_get_hist_30min(client):
 def tl_get_hist_60min(client):
     today = datetime.date.today().strftime('%Y-%m-%d')
     now_hour,now_min = datetime.datetime.now().hour,datetime.datetime.now().minute
-    start_time = str(now_hour)+':'+str( now_min/60*60)
+    str_min = str(now_min/60*60)
+    if str_min == '0':
+        str_min = '00'
+    start_time = str(now_hour)+':'+str_min
     try:
         url1='/api/market/getBarRTIntraDayOneMinute.json?time=%s&exchangeCD=&unit=60'%start_time
         code, result = client.getData(url1)
@@ -281,7 +304,7 @@ def tl_circle_save_60min(client):
     tl_get_hist_60min(client)         
         
 def start_work(client):
-    #tl_circle_save_1min(client)
+    tl_circle_save_1min(client)
     tl_circle_save_5min(client)
     tl_circle_save_15min(client)
     tl_circle_save_30min(client)

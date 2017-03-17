@@ -12,6 +12,7 @@ import time
 import threading
 import urllib,urllib2,httplib
 import calendar
+import logging
 
 from mytool import *
 from factor import *
@@ -19,6 +20,8 @@ from factor import *
 import warnings
 warnings.filterwarnings("ignore")
 
+
+logger = logging.getLogger('stock.ts')
 
 #tushare获取个股.指数的5min数据
 def save_hist_5min(i):
@@ -104,7 +107,7 @@ def ts_save_index_5min(i):
                     print 'get index_5min -->',i,'-->at',this_time
         i = i+1
         
-            
+    logger.debug('succ save index_5min %s'%last_time_5min)        
     print 'succ save index_5min....................'+last_time_5min
 
                     
@@ -148,6 +151,7 @@ def ts_save_hist_day(i):
                 data_day['stockId']=i
                 data = data_day.reset_index()
                 tab = data[['stockId','date','open','close','high','low','volume','name']]
+                tab['adjFactor'] = 1
                 tab.to_sql('hist_day',connect,if_exists='append',index=False)
             #指数——————————————————————————————————————————————————
         else:
@@ -177,10 +181,13 @@ def ts_save_hist_day(i):
             #股票—————————————————————————————————————————————————————
         i = i+1
         print 'get data_day -->',i
+        
+    logger.debug('succ save data_day %s'%start_day)            
     print 'succ save data_day....................'+start_day
     #开始计算指标
     print 'start calculate factor................'+start_day
     start_factor()
+    logger.debug('succ save factor %s'%start_day)
     print 'succ calculate factor................'+start_day
     
 

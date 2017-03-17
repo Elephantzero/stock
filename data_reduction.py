@@ -12,7 +12,7 @@ import threading
 #的时候可以以一个星期为周期。
 
 def is_Saturday():
-    dayOfWeek = datetime.today().weekday()
+    dayOfWeek = date.today().weekday()
     #print dayOfWeek
     if dayOfWeek == 5:
         return True
@@ -67,6 +67,7 @@ def alldata_reduction():
 def start_data_reduction():
     timer = threading.Timer(86400,alldata_reduction)
     timer.start()
+    print 'start start_data_reduction'
     alldata_reduction()
     
         
