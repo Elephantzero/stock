@@ -338,27 +338,62 @@ def ts_circle_save_60min():
     timer.start()
     ts_save_index_60min(1)
 
+
+def ts_my_data(stockid,tp):
+    day = datetime.datetime.today()
+    day_end = day.strftime("%Y-%m-%d")
+    if tp == 'week':
+        tp_day = day-datetime.timedelta(4)
+        day_begin = tp_day.strftime("%Y-%m-%d")
+    elif tp == 'month':
+        tp_day = time.localtime()  
+        day_begin = '%d-%02d-01' % (tp_day.tm_year, tp_day.tm_mon)  # 月初肯定是1号
     
+    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    sql = "select * from hist_day where stockId = %s and date>='%s' and date<='%s'"%(stockid,day_begin,day_end)
+    df = pd.read_sql_query(sql,connect)
+    #将df按时间排序，日期最近的在最后,再计算
+    df = df.sort(columns='date')
+    df['qhigh'] = [df['high'][i]*df['adjFactor'][i]/df['adjFactor'].values[-1] for i in range(len(df))]
+    df['qlow'] = [df['low'][i]*df['adjFactor'][i]/df['adjFactor'].values[-1] for i in range(len(df))]
+    df['qclose'] = [df['close'][i]*df['adjFactor'][i]/df['adjFactor'].values[-1] for i in range(len(df))]
+    df['qopen'] = [df['open'][i]*df['adjFactor'][i]/df['adjFactor'].values[-1] for i in range(len(df))]
+    tp_open = df.iloc[[0]]['qopen']
+    tp_close = df.iloc[[-1]]['qclose']
+    tp_high = max(df['qhigh'])
+    tp_low = min(df['qlow'])
+    tp_df = pd.DataFrame({'stockId':stockid,'date':day_end,'open':tp_open,'close':tp_close,'high':tp_high,'low':tp_low})
+    return tp_df
     
-#周五更新，只有6个指数和所有个股的未复权数据
+#周五更新
 def ts_save_hist_week(i):
     bStart = is_friday()
     if bStart:
-        pass
+        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        tab_stock = pd.read_sql('stock',connect)
+        for i in tab_stock['Id'].values:
+           df = ts_my_data(i,'week')
+           df.to_sql('hist_week',connect)
             
 
 
-#月底更新,只有6个指数和所有个股的未复权数据
+#月底更新
 def ts_save_hist_month(i):
     bStart = is_monthday()
     if bStart:
-        pass
+        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        tab_stock = pd.read_sql('stock',connect)
+        for i in tab_stock['Id'].values:
+           df = ts_my_data(i,'month')
+           df.to_sql('hist_month',connect)
+            
+        
 
 
 
 
 def is_friday():
-    dayOfWeek = datetime.today().weekday()
+    dayOfWeek = datetime.datetime.today().weekday()
     if dayOfWeek == 4:
         return True
     else:

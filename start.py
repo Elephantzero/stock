@@ -45,7 +45,7 @@ if __name__ == '__main__':
     #日K数据暂定为晚上8点，确保tushare中复权数据已经产生
     sched_Timer = datetime.datetime(year,month,today,20,0,0)
     #通联获取数据入口
-    start_work(client)
+    #start_work(client)
     #tushare获取数据入口,记得放最后，这个函数包含一个while，放前面会造成函数堵塞
     startSave(sched_Timer)
     #每周的数据处理

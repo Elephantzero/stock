@@ -112,6 +112,7 @@ def tl_get_hist_5min(client):
                 print sql
                 session.execute(sql)
                 session.commit()
+                session.close()
             
             print i 
             i = i+1
@@ -304,7 +305,7 @@ def tl_circle_save_60min(client):
     tl_get_hist_60min(client)         
         
 def start_work(client):
-    tl_circle_save_1min(client)
+    #tl_circle_save_1min(client)
     tl_circle_save_5min(client)
     tl_circle_save_15min(client)
     tl_circle_save_30min(client)
