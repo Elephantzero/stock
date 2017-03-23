@@ -34,3 +34,28 @@
 2017-03-17 16:32:29,736 - stock.ts - DEBUG - succ save index_5min 2017-03-17 15:00:00
 2017-03-17 16:37:29,588 - stock.ts - DEBUG - succ save index_5min 2017-03-17 15:00:00
 2017-03-17 16:42:31,976 - stock.ts - DEBUG - succ save index_5min 2017-03-17 15:00:00
+2017-03-21 13:32:57,688 - stock - INFO - app start first
+2017-03-21 13:33:10,585 - stock.ts - DEBUG - succ save index_5min 2017-03-21 13:30:00
+2017-03-21 13:34:32,434 - stock - INFO - app start first
+2017-03-21 13:41:12,151 - stock - INFO - app start first
+2017-03-21 13:43:51,135 - stock - INFO - app start first
+2017-03-21 13:46:25,994 - stock - INFO - app start first
+2017-03-21 13:47:19,997 - stock.ts - DEBUG - succ save index_5min 2017-03-21 13:45:00
+2017-03-21 13:48:53,803 - stock - INFO - app start first
+2017-03-21 13:49:15,959 - stock.ts - DEBUG - succ save index_5min 2017-03-21 13:45:00
+2017-03-21 13:49:57,967 - stock - INFO - app start first
+2017-03-21 13:52:12,808 - stock - INFO - app start first
+2017-03-21 14:06:44,407 - stock - INFO - app start first
+2017-03-21 14:08:17,645 - stock.ts - DEBUG - succ save index_5min 2017-03-21 14:05:00
+2017-03-21 15:04:15,134 - stock - INFO - app start first
+2017-03-21 15:05:34,250 - stock.ts - DEBUG - succ save index_5min 2017-03-21 15:00:00
+2017-03-21 15:10:39,315 - stock.ts - DEBUG - succ save index_5min 2017-03-21 15:00:00
+2017-03-21 20:32:59,352 - stock - INFO - app start first
+2017-03-21 20:33:25,578 - stock.ts - DEBUG - succ save index_5min 2017-03-21 15:00:00
+2017-03-21 20:37:42,732 - stock - INFO - app start first
+2017-03-21 20:38:05,318 - stock.ts - DEBUG - succ save index_5min 2017-03-21 15:00:00
+2017-03-22 10:03:15,147 - stock - INFO - app start first
+2017-03-22 16:40:36,322 - stock - INFO - app start first
+2017-03-22 16:40:57,848 - stock.ts - DEBUG - succ save index_5min 2017-03-22 15:00:00
+2017-03-22 16:48:52,374 - stock - INFO - app start first
+2017-03-22 16:49:22,020 - stock.ts - DEBUG - succ save index_5min 2017-03-22 15:00:00

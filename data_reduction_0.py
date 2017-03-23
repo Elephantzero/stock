@@ -9,6 +9,8 @@ from sqlalchemy.orm import sessionmaker
 db_session=sessionmaker(bind=connect)
 session=db_session()
 
+#调整：一星期的5分钟数据存1张表，周六存入当年一张5min大表，每年一张大表,这样校验
+#的时候可以以一个星期为周期。
 
 def is_Saturday():
     dayOfWeek = date.today().weekday()
@@ -33,6 +35,11 @@ def newYaerTable():
         
 
 def reduction_5min():
+    #from sqlalchemy import create_engine
+    #from sqlalchemy.orm import sessionmaker
+    #connect = create_engine(localdb)
+    #db_session=sessionmaker(bind=connect)
+    #session=db_session()
     thisYaer = datetime.now().year
     tab_name = 'hist_5min_%s'%thisYaer
     sql = 'SELECT table_name FROM information_schema.TABLES WHERE table_name="%s"'%tab_name
@@ -50,18 +57,18 @@ def reduction_5min():
     #session=db_session()
     session.execute(sql)
     session.commit()
-'''
+
 def alldata_reduction():
     bStart = is_Saturday()
     if bStart:
         reduction_5min()
         print 'alldata_reduction is  working'
     print 'alldata_reduction end.............'
-'''    
+    
 def start_data_reduction():
-    timer = threading.Timer(86400,reduction_5min)
+    timer = threading.Timer(86400,alldata_reduction)
     timer.start()
     print 'start start_data_reduction'
-    reduction_5min()
+    alldata_reduction()
     
         

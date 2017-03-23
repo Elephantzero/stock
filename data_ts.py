@@ -7,6 +7,7 @@ get_h_data:只有日K数据，提供各种复权数据，区分指数和个股�
 import tushare as ts
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 import datetime
 import time
 import threading
@@ -23,9 +24,10 @@ warnings.filterwarnings("ignore")
 
 logger = logging.getLogger('stock.ts')
 
+
 #tushare获取个股.指数的5min数据
 def save_hist_5min(i):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -72,7 +74,7 @@ data_recent_5min = {} #dict   i:第i个指数上次获取的df
 last_time_5min = '' #存储上次获取具体5min数据的时间点
 #tushare获取6个指数的5min数据    
 def ts_save_index_5min(i):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -126,7 +128,9 @@ def ts_circle_save_5min():
         
 #tushare获取个股.指数的day数据
 def ts_save_hist_day(i):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    db_session=sessionmaker(bind=connect)
+    session=db_session()
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -150,8 +154,13 @@ def ts_save_hist_day(i):
                 data_day['name'] = tab_stock.name[i-1]
                 data_day['stockId']=i
                 data = data_day.reset_index()
+                date = data['date'][0]
                 tab = data[['stockId','date','open','close','high','low','volume','name']]
                 tab['adjFactor'] = 1
+                sql = "update hist_5min,hist_15min,hist_30min,hist_60min set hist_5min.adjFactor=1,hist_15min.adjFactor=1,hist_30min.adjFactor=1,hist_60min.adjFactor=1 where hist_5min.stockId=%d and hist_15min.stockId=%d and hist_30min.stockId=%d and hist_60min.stockId=%d and hist_5min.date>'%s' and hist_15min.date>'%s' and hist_30min.date>'%s' and hist_60min.date>'%s'"%(i,i,i,i,date,date,date,date)
+                session.execute(sql)
+                session.commit()
+                
                 tab.to_sql('hist_day',connect,if_exists='append',index=False)
             #指数——————————————————————————————————————————————————
         else:
@@ -173,7 +182,12 @@ def ts_save_hist_day(i):
                     data_day['PE']=otherdata_day.query('code=="%s"'%tab_stock.code[i-1]).per.values[0]
                     data_day['adjFactor']=data_day_hfq['close']/data_day['close']
                     data = data_day.reset_index()
+                    date = data['date'][0]
                     tab = data[['stockId','date','open','close','high','low','volume','name','turnover','adjFactor','nmc','PB','PE']]
+                    sql = "update hist_5min,hist_15min,hist_30min,hist_60min set hist_5min.adjFactor=%f,hist_15min.adjFactor=%f,hist_30min.adjFactor=%f,hist_60min.adjFactor=%f where hist_5min.stockId=%d and hist_15min.stockId=%d and hist_30min.stockId=%d and hist_60min.stockId=%d and hist_5min.date>'%s' and hist_15min.date>'%s' and hist_30min.date>'%s' and hist_60min.date>'%s'"%(data_day['adjFactor'][0],data_day['adjFactor'][0],data_day['adjFactor'][0],data_day['adjFactor'][0],i,i,i,i,date,date,date,date)
+                    session.execute(sql)
+                    session.commit()
+                    
                     #增加数据库回滚
                     tab.to_sql('hist_day',connect,if_exists='append',index=False)
                 except:
@@ -181,6 +195,7 @@ def ts_save_hist_day(i):
             #股票—————————————————————————————————————————————————————
         i = i+1
         print 'get data_day -->',i
+        
         
     logger.debug('succ save data_day %s'%start_day)            
     print 'succ save data_day....................'+start_day
@@ -195,7 +210,7 @@ data_recent_15min = {} #dict   i:第i个指数上次获取的df
 last_time_15min = '' #存储上次获取具体15min数据的时间点
 #tushare获取6个指数的15min数据    
 def ts_save_index_15min(i):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -238,7 +253,7 @@ def ts_save_index_15min(i):
 data_recent_30min = {} #dict   i:第i个指数上次获取的df
 last_time_30min = '' #存储上次获取具体5min数据的时间点
 def ts_save_index_30min(i):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -281,7 +296,7 @@ def ts_save_index_30min(i):
 data_recent_60min = {} #dict   i:第i个指数上次获取的df
 last_time_60min = '' #存储上次获取具体5min数据的时间点    
 def ts_save_index_60min(i):    
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     
     start_day = datetime.date.today().strftime('%Y-%m-%d')
@@ -338,7 +353,7 @@ def ts_circle_save_60min():
     timer.start()
     ts_save_index_60min(1)
 
-
+#计算tp时间内的bar数据
 def ts_my_data(stockid,tp):
     day = datetime.datetime.today()
     day_end = day.strftime("%Y-%m-%d")
@@ -349,7 +364,7 @@ def ts_my_data(stockid,tp):
         tp_day = time.localtime()  
         day_begin = '%d-%02d-01' % (tp_day.tm_year, tp_day.tm_mon)  # 月初肯定是1号
     
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     sql = "select * from hist_day where stockId = %s and date>='%s' and date<='%s'"%(stockid,day_begin,day_end)
     df = pd.read_sql_query(sql,connect)
     #将df按时间排序，日期最近的在最后,再计算
@@ -369,7 +384,7 @@ def ts_my_data(stockid,tp):
 def ts_save_hist_week(i):
     bStart = is_friday()
     if bStart:
-        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
         tab_stock = pd.read_sql('stock',connect)
         for i in tab_stock['Id'].values:
            df = ts_my_data(i,'week')
@@ -381,7 +396,7 @@ def ts_save_hist_week(i):
 def ts_save_hist_month(i):
     bStart = is_monthday()
     if bStart:
-        connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+        #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
         tab_stock = pd.read_sql('stock',connect)
         for i in tab_stock['Id'].values:
            df = ts_my_data(i,'month')
@@ -439,7 +454,7 @@ def startSave(t1):
     ts_circle_save_15min()
     ts_circle_save_30min()
     ts_circle_save_60min()
-            
+             
     while flag_day:        
         now = datetime.datetime.now()
         if now >= t1:
@@ -447,6 +462,7 @@ def startSave(t1):
            ts_circle_save_week()
            ts_circle_save_month()
            flag_day = 0
+        time.sleep(10)
 
     
     

@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 
 localdb = 'mysql://root:@127.0.0.1:3306/stock?charset=utf8'
 serverdb = 'mysql://stock:bfstock330@rm-bp1l731gac61ue24q.mysql.rds.aliyuncs.com:3306/stock?charset=utf8'
-
+connect = create_engine(localdb)
 
 
 
@@ -24,12 +24,12 @@ class ts_const:
 #day:检查目标日期
 def ts_chkDaydata(day):
     i=1
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     tab_stock = pd.read_sql('stock',connect)
     #result = pd.DataFrame(columns=['stockId','data','open','close','high','low','volume','name','adjFactor'])
     #校验标志位
     result = 1
-    #while i<=10:
+    #while i<=20:
     while i<= len(tab_stock):
         if tab_stock.type[i-1] == True:
             data_day = ts.get_h_data(tab_stock.code[i-1],start=day,end=day,index=True)
@@ -54,6 +54,7 @@ def ts_chkDaydata(day):
                 tab.to_sql('hist_day',connect,if_exists='append',index=False)
                 #加入2次校验，
                 result = 0
+        print 'check stockId----->',i
         i = i+1
     return result
     

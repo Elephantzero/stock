@@ -2,7 +2,7 @@
 import talib as ta
 import tushare as ts
 import pandas as pd
-from sqlalchemy import create_engine
+from mytool import *
 '''
 数据用前复权数据计算
 前复权数据根据后复权因子自己计算
@@ -63,7 +63,7 @@ def get_kdj(df):
     return k,d
     
 def get_qfq_data(stockid):
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     sql = 'select * from hist_day where stockId = %s'%stockid
     df = pd.read_sql_query(sql,connect)
     #将df按时间排序，日期最近的在最后,再计算
@@ -92,18 +92,18 @@ def get_all_factor(df):
     result = df[['macd','ma5','ma10','ma20','ma30','ma60']]
     #result['histId'] = df[['Id']]
     result['histId'] = df['Id']
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     result.to_sql('factor',connect,if_exists='append',index=False)
  
     
 def start_factor():
-    connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
+    #connect = create_engine('mysql://root:@127.0.0.1:3306/stock?charset=utf8')
     sql = 'select Id from stock'
     stock = pd.read_sql_query(sql,connect)
     for i in stock['Id']:
         data = get_qfq_data(i)
         get_all_factor(data)
-        print 'calculate factor of stock%Id ok '%i
+        print 'calculate factor of stock%d ok '%i
 
 
 
